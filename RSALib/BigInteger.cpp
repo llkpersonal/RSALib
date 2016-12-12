@@ -32,7 +32,7 @@ BigInteger::BigInteger(const BigInteger& b) :
 	memcpy(m_nIntegers, b.m_nIntegers, m_szIntegers*sizeof(char));
 }
 
-BigInteger BigInteger::operator=(const BigInteger& b) {
+const BigInteger& BigInteger::operator=(const BigInteger& b) {
 	delete[] m_nIntegers;
 	size_t i = b.m_szIntegers - 1;
 	while (i > 0 && b.m_nIntegers[i] == 0)i--;
@@ -350,6 +350,14 @@ BigInteger BigInteger::DivideTwoPositiveBigInteger(BigInteger a,BigInteger b, Bi
 	}
 }
 
+BigInteger BigInteger::random(size_t bitCount) {
+	BigInteger res;
+	for (int i = 0; i < bitCount; i++) {
+		res = res*BigInteger::TWO+BigInteger(rand()%2);
+	}
+	return res;
+} 
+
 std::ostream& operator<<(std::ostream& os, const BigInteger& b) {
 	if (!b.m_bPositive) os << '-';
 	size_t i = b.m_szIntegers - 1;
@@ -443,4 +451,8 @@ BigInteger::operator char() {
 		i--;
 	}
 	return res;
+}
+
+BigInteger::operator bool() {
+	return *this != ZERO;
 }

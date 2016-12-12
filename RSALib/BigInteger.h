@@ -17,10 +17,11 @@ public:
 	BigInteger(const std::string& sNumber);
 	BigInteger(const BigInteger& b);
 	~BigInteger();
+
 	BigInteger operator+(const BigInteger& b);
 	BigInteger operator-(const BigInteger& b);
 	BigInteger operator*(const BigInteger& b);
-	BigInteger operator=(const BigInteger& b);
+	const BigInteger& operator=(const BigInteger& b);
 	BigInteger operator/(BigInteger b);
 	BigInteger operator%(BigInteger b);
 	bool operator==(const BigInteger& b) const;
@@ -30,11 +31,17 @@ public:
 	bool operator>=(const BigInteger& b) const;
 	bool operator!=(const BigInteger& b) const;
 	BigInteger operator-() const;
+	
+	operator char();
+	operator bool();
 	friend std::ostream& operator<<(std::ostream& os, const BigInteger& b);
 	static BigInteger pow(BigInteger x,BigInteger e,BigInteger mod);
 	static BigInteger gcd(BigInteger a, BigInteger b);
 	static BigInteger extGcd(BigInteger a, BigInteger b, BigInteger &x, BigInteger &y);
-	operator char();
+	static BigInteger random(size_t bitCount);
+private:
+	typedef unsigned int uint32;
+	typedef unsigned long long uint64;
 private:
 	BigInteger MultiplyWithPowerTen(int e);
 	BigInteger DivideWithPowerTen(int e);
