@@ -1,12 +1,14 @@
 #include "BigInteger.h"
 
-BigInteger BigInteger::ONE("1");
-BigInteger BigInteger::TWO("2");
-BigInteger BigInteger::ZERO("0");
-BigInteger BigInteger::TEN("10");
+BigInteger BigInteger::ONE(1);
+BigInteger BigInteger::TWO(2);
+BigInteger BigInteger::ZERO(0);
+BigInteger BigInteger::TEN(10);
+
+const BigInteger::uint32 BigInteger::MAX_UINT32 = ~0U;
 
 BigInteger::BigInteger():m_bPositive(true),m_szIntegers(1) {
-	m_nIntegers = new char[1];
+	m_nIntegers = new uint32[1];
 	m_nIntegers[0] = 0;
 }
 
@@ -16,9 +18,9 @@ BigInteger::BigInteger(BigInteger& b) :
 	size_t i = b.m_szIntegers - 1;
 	while (i > 0 && b.m_nIntegers[i] == 0)i--;
 	m_szIntegers = i + 1;
-	m_nIntegers = new char[m_szIntegers];
-	memset(m_nIntegers, 0, m_szIntegers*sizeof(char));
-	memcpy(m_nIntegers, b.m_nIntegers, m_szIntegers*sizeof(char));
+	m_nIntegers = new uint32[m_szIntegers];
+	memset(m_nIntegers, 0, m_szIntegers*sizeof(uint32));
+	memcpy(m_nIntegers, b.m_nIntegers, m_szIntegers*sizeof(uint32));
 }
 
 BigInteger::BigInteger(const BigInteger& b) :
@@ -27,9 +29,9 @@ BigInteger::BigInteger(const BigInteger& b) :
 	size_t i = b.m_szIntegers - 1;
 	while (i > 0 && b.m_nIntegers[i] == 0)i--;
 	m_szIntegers = i + 1;
-	m_nIntegers = new char[m_szIntegers];
-	memset(m_nIntegers, 0, m_szIntegers*sizeof(char));
-	memcpy(m_nIntegers, b.m_nIntegers, m_szIntegers*sizeof(char));
+	m_nIntegers = new uint32[m_szIntegers];
+	memset(m_nIntegers, 0, m_szIntegers*sizeof(uint32));
+	memcpy(m_nIntegers, b.m_nIntegers, m_szIntegers*sizeof(uint32));
 }
 
 const BigInteger& BigInteger::operator=(const BigInteger& b) {
@@ -37,17 +39,20 @@ const BigInteger& BigInteger::operator=(const BigInteger& b) {
 	size_t i = b.m_szIntegers - 1;
 	while (i > 0 && b.m_nIntegers[i] == 0)i--;
 	m_szIntegers = i+1;
-	m_nIntegers = new char[m_szIntegers];
-	memset(m_nIntegers, 0, m_szIntegers*sizeof(char));
-	memcpy(m_nIntegers, b.m_nIntegers, m_szIntegers*sizeof(char));
+	m_nIntegers = new uint32[m_szIntegers];
+	memset(m_nIntegers, 0, m_szIntegers*sizeof(uint32));
+	memcpy(m_nIntegers, b.m_nIntegers, m_szIntegers*sizeof(uint32));
 	m_bPositive = b.m_bPositive;
 	return *this;
 }
 
+// 有错误
 BigInteger::BigInteger(const std::string& sNumber):
 	m_bPositive(true)
 {
 	m_szIntegers = 0;
+	std::vector<uint32> t_vector;
+	uint64 t_uint64 = 0;
 	for (std::string::size_type i = 0; i < sNumber.size(); i++) {
 		if (sNumber[i] == '-') {
 			if(!m_szIntegers)
@@ -62,24 +67,30 @@ BigInteger::BigInteger(const std::string& sNumber):
 			m_szIntegers++;
 		}
 	}
-
-	m_nIntegers = new char[m_szIntegers];
-	memset(m_nIntegers, 0, sizeof(char)*m_szIntegers);
-
-	int i = 0;
-	for (std::string::const_reverse_iterator it = sNumber.rbegin(); it != sNumber.rend(); it++, i++) {
-		m_nIntegers[i] = (*it) - '0';
+	m_nIntegers = nullptr;
+	m_szIntegers = 0;
+	for (std::string::size_type i = 0; i < sNumber.size(); i++) {
+		if(sNumber[i] >= '0' && sNumber[i]<='9')
+			*this = *this*BigInteger::TEN + BigInteger(sNumber[i] - '0');
 	}
 }
 
 BigInteger::BigInteger(int x){
-	std::ostringstream sout;
-	sout << x;
-	new (this)BigInteger(sout.str());
+	if (x < 0) {
+		m_bPositive = false;
+		x = -x;
+	}
+	else {
+		m_bPositive = true;
+	}
+	m_szIntegers = 1;
+	m_nIntegers = new uint32[1];
+	m_nIntegers[0] = x;
 }
 
 BigInteger::~BigInteger() {
-	delete[] m_nIntegers;
+	if(m_nIntegers != nullptr)
+		delete[] m_nIntegers;
 }
 
 BigInteger BigInteger::operator+(const BigInteger& b) {
@@ -226,15 +237,15 @@ BigInteger BigInteger::operator-() const{
 
 BigInteger BigInteger::AddTwoPositiveBigInteger(const BigInteger &a, const BigInteger &b) {
 	size_t len = std::max(a.m_szIntegers, b.m_szIntegers) + 1;
-	char* t = new char[len];
-	memset(t, 0, len*sizeof(char));
-	int c = 0;
+	uint32* t = new uint32[len];
+	memset(t, 0, len*sizeof(uint32));
+	uint64 c = 0, sum = 0;
 	for (size_t i = 0; i < len; i++) {
-		t[i] = c;
-		if (i < a.m_szIntegers) t[i] += a.m_nIntegers[i];
-		if (i < b.m_szIntegers) t[i] += b.m_nIntegers[i];
-		c = t[i] / 10;
-		t[i] %= 10;
+		sum = c;
+		if (i < a.m_szIntegers) sum += a.m_nIntegers[i];
+		if (i < b.m_szIntegers) sum += b.m_nIntegers[i];
+		c = sum >> 32;
+		t[i] = sum & MAX_UINT32;
 	}
 	BigInteger res;
 	delete[] res.m_nIntegers;
@@ -257,8 +268,8 @@ BigInteger BigInteger::SubTwoPositiveBigInteger(const BigInteger& a, const BigIn
 	while (len_a > 0 && a.m_nIntegers[len_a] == 0) len_a--;
 	while (len_b > 0 && b.m_nIntegers[len_b] == 0) len_b--;
 
-	char* arr_a = a.m_nIntegers;
-	char* arr_b = b.m_nIntegers;
+	uint32* arr_a = a.m_nIntegers;
+	uint32* arr_b = b.m_nIntegers;
 
 	if (a < b) {
 		std::swap(arr_a, arr_b);
@@ -268,16 +279,16 @@ BigInteger BigInteger::SubTwoPositiveBigInteger(const BigInteger& a, const BigIn
 	assert(len_a >= len_b);
 
 	size_t len_c = std::max(len_a, len_b) + 1;
-	char* arr_c = new char[len_c];
-	memset(arr_c, 0, sizeof(char)*len_c);
+	uint32* arr_c = new uint32[len_c];
+	memset(arr_c, 0, sizeof(uint32)*len_c);
 
-	char ta = 0, tb = 0 , tc = 0;
+	uint64 ta = 0, tb = 0 , tc = 0;
 	for (size_t i = 0; i < len_c; i++) {
 		if (i <= len_a) ta = arr_a[i]; else ta = 0;
 		if (i <= len_b) tb = arr_b[i]; else tb = 0;
 		tb += tc;
 		if (ta < tb) {
-			arr_c[i] = ta + 10 - tb;
+			arr_c[i] = ta + (MAX_UINT32+1) - tb;
 			tc = 1;
 		}
 		else {
@@ -295,20 +306,20 @@ BigInteger BigInteger::MultiplyTwoPositiveBigInteger(const BigInteger &a, const 
 	size_t len_c = a.m_szIntegers + b.m_szIntegers;
 	BigInteger c;
 	delete[] c.m_nIntegers;
-	c.m_nIntegers = new char[len_c];
-	memset(c.m_nIntegers, 0, sizeof(char)*len_c);
+	c.m_nIntegers = new uint32[len_c];
+	memset(c.m_nIntegers, 0, sizeof(uint32)*len_c);
 	for (size_t i = 0; i < b.m_szIntegers; i++) {
-		char tc = 0;
+		uint64 tc = 0;
 		for (size_t j = 0; j < a.m_szIntegers; j++) {
-			char ta = a.m_nIntegers[j], tb = b.m_nIntegers[i];
-			char td = ta*tb+tc+c.m_nIntegers[i + j];
-			c.m_nIntegers[i + j] = td % 10;
-			tc = td / 10;
+			uint64 ta = a.m_nIntegers[j], tb = b.m_nIntegers[i];
+			uint64 td = ta*tb+tc+c.m_nIntegers[i + j];
+			c.m_nIntegers[i + j] = td & MAX_UINT32;
+			tc = td >> 32;
 		}
 		int n = 0;
 		while (tc) {
-			c.m_nIntegers[i+a.m_szIntegers+n] = tc % 10;
-			tc /= 10;
+			c.m_nIntegers[i+a.m_szIntegers+n] = tc & MAX_UINT32;
+			tc >>= 32;
 			n++;
 		}
 	}
@@ -317,37 +328,30 @@ BigInteger BigInteger::MultiplyTwoPositiveBigInteger(const BigInteger &a, const 
 	return c;
 }
 
+// 大数除法还有待解决
 BigInteger BigInteger::DivideTwoPositiveBigInteger(BigInteger a,BigInteger b, BigInteger& mod) {
 	assert(a.m_bPositive);
 	assert(b.m_bPositive);
 	BigInteger res;
-	size_t len_a = a.m_szIntegers - 1;
-	size_t len_b = b.m_szIntegers - 1;
-	while (len_a > 0 && a.m_nIntegers[len_a] == 0) len_a--;
-	while (len_b > 0 && b.m_nIntegers[len_b] == 0) len_b--;
-	if (len_a < len_b) return ZERO;
-	else if (len_a == len_b) {
-		while (a - b >= ZERO) {
-			res = res + ONE;
-			a = a - b;
-		}
-		mod = a;
-		return res;
+	uint64 l = 0, r = 9999999999;
+	while (true) {
+		BigInteger t = b*BigInteger(r);
+		if (t > a) break;
+		a = a - t;
+		res = res + BigInteger(r);
 	}
-	else if (len_a > len_b) {
-		size_t len_c = len_a - len_b;
-		while (len_c >= 0) {
-			BigInteger c = b.MultiplyWithPowerTen(len_c);
-			while (a - c >= ZERO) {
-				res = res + ONE.MultiplyWithPowerTen(len_c);
-				a = a - c;
-			}
-			if (len_c == 0) break;
-			len_c--;
-		}
-		mod = a;
-		return res;
+	while ( r - l > BigInteger::ONE ) {
+		uint64 m = l + r >> 1;
+		BigInteger t = b*BigInteger(m);
+		if (t > a)
+			r = m;
+		else
+			l = m;
 	}
+	a = a - b*BigInteger(l);
+	res = res + BigInteger(l);
+	mod = a;
+	return res;
 }
 
 BigInteger BigInteger::random(size_t bitCount) {
@@ -358,17 +362,33 @@ BigInteger BigInteger::random(size_t bitCount) {
 	return res;
 } 
 
+std::string BigInteger::ParseToDecimal() const{
+	size_t n = m_szIntegers - 1;
+	while (n > 0 && m_nIntegers[n] == 0) {
+		n--;
+	}
+	std::string res("");
+	BigInteger s = *this;
+	while (s) {
+		BigInteger modn = s % BigInteger::TEN;
+		res = char(modn.m_nIntegers[0] + '0') + res;
+		s = s / BigInteger::TEN;
+	}
+	return res;
+}
+
 std::ostream& operator<<(std::ostream& os, const BigInteger& b) {
 	if (!b.m_bPositive) os << '-';
-	size_t i = b.m_szIntegers - 1;
-	while (i > 0 && b.m_nIntegers[i]==0) {
-		i--;
-	}
-	while (i >= 0) {
-		os << int(b.m_nIntegers[i]);
-		if (i == 0) break;
-		i--;
-	}
+	//size_t i = b.m_szIntegers - 1;
+	//while (i > 0 && b.m_nIntegers[i]==0) {
+	//	i--;
+	//}
+	//while (i >= 0) {
+	//	os << int(b.m_nIntegers[i]);
+	//	if (i == 0) break;
+	//	i--;
+	//}
+	os << b.ParseToDecimal();
 	return os;
 }
 
@@ -377,8 +397,8 @@ BigInteger BigInteger::MultiplyWithPowerTen(int e) {
 	BigInteger res;
 	delete[] res.m_nIntegers;
 	size_t len_res = m_szIntegers + e;
-	res.m_nIntegers = new char[len_res];
-	memset(res.m_nIntegers, 0, sizeof(char)*len_res);
+	res.m_nIntegers = new uint32[len_res];
+	memset(res.m_nIntegers, 0, sizeof(uint32)*len_res);
 	for (size_t i = 0; i < m_szIntegers; i++) {
 		res.m_nIntegers[i + e] = m_nIntegers[i];
 	}
@@ -395,8 +415,8 @@ BigInteger BigInteger::DivideWithPowerTen(int e) {
 	}
 	delete[] res.m_nIntegers;
 	size_t len_res = m_szIntegers - e;
-	res.m_nIntegers = new char[len_res];
-	memset(res.m_nIntegers, 0, sizeof(char)*len_res);
+	res.m_nIntegers = new uint32[len_res];
+	memset(res.m_nIntegers, 0, sizeof(uint32)*len_res);
 	for (size_t i = 0; i < len_res; i++) {
 		res.m_nIntegers[i] = m_nIntegers[i + e];
 	}

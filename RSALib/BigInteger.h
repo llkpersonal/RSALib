@@ -8,8 +8,12 @@
 #include <algorithm>
 #include <cassert>
 #include <sstream>
+#include <vector>
 
 class BigInteger {
+private:
+	typedef unsigned int uint32;
+	typedef unsigned long long uint64;
 public:
 	BigInteger();
 	BigInteger(BigInteger& b);
@@ -32,16 +36,15 @@ public:
 	bool operator!=(const BigInteger& b) const;
 	BigInteger operator-() const;
 	
-	operator char();
+	explicit operator char();
 	operator bool();
 	friend std::ostream& operator<<(std::ostream& os, const BigInteger& b);
 	static BigInteger pow(BigInteger x,BigInteger e,BigInteger mod);
 	static BigInteger gcd(BigInteger a, BigInteger b);
 	static BigInteger extGcd(BigInteger a, BigInteger b, BigInteger &x, BigInteger &y);
 	static BigInteger random(size_t bitCount);
-private:
-	typedef unsigned int uint32;
-	typedef unsigned long long uint64;
+
+	std::string ParseToDecimal() const;
 private:
 	BigInteger MultiplyWithPowerTen(int e);
 	BigInteger DivideWithPowerTen(int e);
@@ -56,8 +59,10 @@ public:
 	static BigInteger TEN;
 private:
 	bool m_bPositive;
-	char *m_nIntegers;
+	uint32 *m_nIntegers;
 	size_t m_szIntegers;
+private:
+	static const uint32 MAX_UINT32;
 };
 
 #endif

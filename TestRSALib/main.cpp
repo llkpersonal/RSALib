@@ -3,9 +3,7 @@
 #include <vector>
 
 int main() {
-	BigInteger p = PrimeUtil::GenerateSafePrime(1024);
-	BigInteger q = PrimeUtil::GenerateSafePrime(1024);
-	std::cout << "p = " << p << std::endl;
-	std::cout << "q = " << q << std::endl;
+	BigInteger p("10813352"),q("332810362");
+	std::cout << p * q << std::endl;
 	return 0;
 }
