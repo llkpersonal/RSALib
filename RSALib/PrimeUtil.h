@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <cassert>
+#include <ctime>
 #include "BigInteger.h"
 
 class PrimeUtil {

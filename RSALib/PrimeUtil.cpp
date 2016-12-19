@@ -1,6 +1,7 @@
 #include "PrimeUtil.h"
 
 BigInteger PrimeUtil::GeneratePrime(int bitCount) {
+	srand(time(NULL));
 	BigInteger res;
 	do {
 		res = 1;
@@ -30,8 +31,8 @@ bool PrimeUtil::MillarRabin(BigInteger n) {
 	while (!(m % BigInteger::TWO)) { m = m / BigInteger::TWO; t++; }
 	for (int i = 0; i < 10; i++) {
 		BigInteger a = BigInteger::random(2048) % (n - BigInteger::TWO) + BigInteger::TWO;
-		std::cout << "m = " << m << std::endl;
-		x = BigInteger::pow(a,m,n);
+		//std::cout << "m = " << m << std::endl;
+		x = BigInteger::pow(a%n,m%n,n);
 		for (long long j = 0; j < t; j++) {
 			y = x * x % n;
 			if (y == BigInteger::ONE && x != BigInteger::ONE && x != n - BigInteger::ONE) return false;

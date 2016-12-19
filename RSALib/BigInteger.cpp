@@ -5,7 +5,8 @@ BigInteger BigInteger::TWO(2);
 BigInteger BigInteger::ZERO(0);
 BigInteger BigInteger::TEN(10);
 
-const BigInteger::uint32 BigInteger::MAX_UINT32 = ~0U;
+const BigInteger::uint32 BigInteger::BASE_NUM = 16;
+const BigInteger::uint32 BigInteger::BASE_MAX = (1<< BASE_NUM)-1;
 
 BigInteger::BigInteger():m_bPositive(true),m_szIntegers(1) {
 	m_nIntegers = new uint32[1];
@@ -46,7 +47,6 @@ const BigInteger& BigInteger::operator=(const BigInteger& b) {
 	return *this;
 }
 
-// 有错误
 BigInteger::BigInteger(const std::string& sNumber):
 	m_bPositive(true)
 {
@@ -244,8 +244,8 @@ BigInteger BigInteger::AddTwoPositiveBigInteger(const BigInteger &a, const BigIn
 		sum = c;
 		if (i < a.m_szIntegers) sum += a.m_nIntegers[i];
 		if (i < b.m_szIntegers) sum += b.m_nIntegers[i];
-		c = sum >> 32;
-		t[i] = sum & MAX_UINT32;
+		c = sum >> BASE_NUM;
+		t[i] = sum & BASE_MAX;
 	}
 	BigInteger res;
 	delete[] res.m_nIntegers;
@@ -288,7 +288,7 @@ BigInteger BigInteger::SubTwoPositiveBigInteger(const BigInteger& a, const BigIn
 		if (i <= len_b) tb = arr_b[i]; else tb = 0;
 		tb += tc;
 		if (ta < tb) {
-			arr_c[i] = ta + (MAX_UINT32+1) - tb;
+			arr_c[i] = ta + (BASE_MAX+1) - tb;
 			tc = 1;
 		}
 		else {
@@ -313,13 +313,13 @@ BigInteger BigInteger::MultiplyTwoPositiveBigInteger(const BigInteger &a, const 
 		for (size_t j = 0; j < a.m_szIntegers; j++) {
 			uint64 ta = a.m_nIntegers[j], tb = b.m_nIntegers[i];
 			uint64 td = ta*tb+tc+c.m_nIntegers[i + j];
-			c.m_nIntegers[i + j] = td & MAX_UINT32;
-			tc = td >> 32;
+			c.m_nIntegers[i + j] = td & BASE_MAX;
+			tc = td >> BASE_NUM;
 		}
 		int n = 0;
 		while (tc) {
-			c.m_nIntegers[i+a.m_szIntegers+n] = tc & MAX_UINT32;
-			tc >>= 32;
+			c.m_nIntegers[i+a.m_szIntegers+n] = tc & BASE_MAX;
+			tc >>= BASE_NUM;
 			n++;
 		}
 	}
@@ -328,29 +328,35 @@ BigInteger BigInteger::MultiplyTwoPositiveBigInteger(const BigInteger &a, const 
 	return c;
 }
 
-// 大数除法还有待解决
 BigInteger BigInteger::DivideTwoPositiveBigInteger(BigInteger a,BigInteger b, BigInteger& mod) {
 	assert(a.m_bPositive);
 	assert(b.m_bPositive);
+	if (b == BigInteger::ZERO) {
+		throw std::runtime_error("Can not divide zero!");
+	}
+
 	BigInteger res;
-	uint64 l = 0, r = 9999999999;
-	while (true) {
-		BigInteger t = b*BigInteger(r);
-		if (t > a) break;
-		a = a - t;
-		res = res + BigInteger(r);
+
+	size_t len_a = a.m_szIntegers - 1;
+	size_t len_b = b.m_szIntegers - 1;
+
+	while (len_a > 0 && a.m_nIntegers[len_a] == 0) len_a--;
+	while (len_b > 0 && b.m_nIntegers[len_b] == 0) len_b--;
+	int len_c = len_a - len_b;
+
+	while (a >= b && len_c >= 0) {
+		BigInteger c = b.MultiplyWithPowerTen(len_c);
+		uint32 l = 0, r = BASE_MAX+1;
+		while (r - l > 1) {
+			int m = l + r >> 1;
+			BigInteger d = c*BigInteger(m);
+			if (d > a) r = m;
+			else l = m;
+		}
+		a = a - c*BigInteger(l);
+		res = res + BigInteger(l).MultiplyWithPowerTen(len_c);
+		len_c--;
 	}
-	while ( r - l > BigInteger::ONE ) {
-		uint64 m = l + r >> 1;
-		BigInteger t = b*BigInteger(m);
-		if (t > a)
-			r = m;
-		else
-			l = m;
-	}
-	a = a - b*BigInteger(l);
-	res = res + BigInteger(l);
-	mod = a;
 	return res;
 }
 
@@ -379,15 +385,6 @@ std::string BigInteger::ParseToDecimal() const{
 
 std::ostream& operator<<(std::ostream& os, const BigInteger& b) {
 	if (!b.m_bPositive) os << '-';
-	//size_t i = b.m_szIntegers - 1;
-	//while (i > 0 && b.m_nIntegers[i]==0) {
-	//	i--;
-	//}
-	//while (i >= 0) {
-	//	os << int(b.m_nIntegers[i]);
-	//	if (i == 0) break;
-	//	i--;
-	//}
 	os << b.ParseToDecimal();
 	return os;
 }
@@ -430,8 +427,23 @@ BigInteger BigInteger::pow(BigInteger x, BigInteger e,BigInteger mod) {
 	while (e > ZERO) {
 		if (e % TWO == ONE) res = res * x % mod;
 		x = x * x % mod;
-		e = e / TWO;
+		e = e.DivideByTwo();
 	}
+	return res;
+}
+
+BigInteger BigInteger::DivideByTwo() {
+	BigInteger res;
+	for (size_t i = 0; i < m_szIntegers; i++) {
+		if (i + 1 < m_szIntegers) {
+			this->m_nIntegers[i] = ((m_nIntegers[i + 1] & 1) << (BASE_NUM-1)) | (m_nIntegers[i] >> 1);
+		}
+	}
+	this->m_nIntegers[m_szIntegers-1] >>= 1;
+	using std::swap;
+	swap(res.m_nIntegers, m_nIntegers);
+	res.m_bPositive = m_bPositive;
+	res.m_szIntegers = m_szIntegers;
 	return res;
 }
 

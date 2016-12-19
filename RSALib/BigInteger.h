@@ -9,6 +9,7 @@
 #include <cassert>
 #include <sstream>
 #include <vector>
+#include <complex>
 
 class BigInteger {
 private:
@@ -43,15 +44,17 @@ public:
 	static BigInteger gcd(BigInteger a, BigInteger b);
 	static BigInteger extGcd(BigInteger a, BigInteger b, BigInteger &x, BigInteger &y);
 	static BigInteger random(size_t bitCount);
-
 	std::string ParseToDecimal() const;
 private:
 	BigInteger MultiplyWithPowerTen(int e);
 	BigInteger DivideWithPowerTen(int e);
+	// 该函数使用时必须要重新赋值使用
+	BigInteger DivideByTwo();
 	static BigInteger AddTwoPositiveBigInteger(const BigInteger &a, const BigInteger &b);
 	static BigInteger SubTwoPositiveBigInteger(const BigInteger &a, const BigInteger &b);
 	static BigInteger MultiplyTwoPositiveBigInteger(const BigInteger &a, const BigInteger &b);
 	static BigInteger DivideTwoPositiveBigInteger(BigInteger a, BigInteger b,BigInteger & mod);
+	static void fft(std::complex<double> y[], int len, int on);
 public:
 	static BigInteger ONE;
 	static BigInteger TWO;
@@ -62,7 +65,8 @@ private:
 	uint32 *m_nIntegers;
 	size_t m_szIntegers;
 private:
-	static const uint32 MAX_UINT32;
+	static const uint32 BASE_MAX;
+	static const uint32 BASE_NUM;
 };
 
 #endif
