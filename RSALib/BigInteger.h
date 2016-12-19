@@ -54,7 +54,8 @@ private:
 	static BigInteger SubTwoPositiveBigInteger(const BigInteger &a, const BigInteger &b);
 	static BigInteger MultiplyTwoPositiveBigInteger(const BigInteger &a, const BigInteger &b);
 	static BigInteger DivideTwoPositiveBigInteger(BigInteger a, BigInteger b,BigInteger & mod);
-	static void fft(std::complex<double> y[], int len, int on);
+	static void BigInteger::fft_change(std::complex<double> *y, int len);
+	static void fft(std::complex<double> *y, int len, int on);
 public:
 	static BigInteger ONE;
 	static BigInteger TWO;

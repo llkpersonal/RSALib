@@ -67,8 +67,9 @@ BigInteger::BigInteger(const std::string& sNumber):
 			m_szIntegers++;
 		}
 	}
-	m_nIntegers = nullptr;
-	m_szIntegers = 0;
+	m_nIntegers = new uint32[1];
+	m_nIntegers[0] = 0;
+	m_szIntegers = 1;
 	for (std::string::size_type i = 0; i < sNumber.size(); i++) {
 		if(sNumber[i] >= '0' && sNumber[i]<='9')
 			*this = *this*BigInteger::TEN + BigInteger(sNumber[i] - '0');
@@ -303,29 +304,86 @@ BigInteger BigInteger::SubTwoPositiveBigInteger(const BigInteger& a, const BigIn
 }
 
 BigInteger BigInteger::MultiplyTwoPositiveBigInteger(const BigInteger &a, const BigInteger &b) {
-	size_t len_c = a.m_szIntegers + b.m_szIntegers;
-	BigInteger c;
-	delete[] c.m_nIntegers;
-	c.m_nIntegers = new uint32[len_c];
-	memset(c.m_nIntegers, 0, sizeof(uint32)*len_c);
-	for (size_t i = 0; i < b.m_szIntegers; i++) {
-		uint64 tc = 0;
-		for (size_t j = 0; j < a.m_szIntegers; j++) {
-			uint64 ta = a.m_nIntegers[j], tb = b.m_nIntegers[i];
-			uint64 td = ta*tb+tc+c.m_nIntegers[i + j];
-			c.m_nIntegers[i + j] = td & BASE_MAX;
-			tc = td >> BASE_NUM;
-		}
-		int n = 0;
-		while (tc) {
-			c.m_nIntegers[i+a.m_szIntegers+n] = tc & BASE_MAX;
-			tc >>= BASE_NUM;
-			n++;
-		}
+	// ∆”Àÿ≥À∑®
+	//if (a.m_szIntegers*b.m_szIntegers < 1000) {
+	//	size_t len_c = a.m_szIntegers + b.m_szIntegers;
+	//	BigInteger c;
+	//	delete[] c.m_nIntegers;
+	//	c.m_nIntegers = new uint32[len_c];
+	//	memset(c.m_nIntegers, 0, sizeof(uint32)*len_c);
+	//	for (size_t i = 0; i < b.m_szIntegers; i++) {
+	//		uint64 tc = 0;
+	//		for (size_t j = 0; j < a.m_szIntegers; j++) {
+	//			uint64 ta = a.m_nIntegers[j], tb = b.m_nIntegers[i];
+	//			uint64 td = ta*tb + tc + c.m_nIntegers[i + j];
+	//			c.m_nIntegers[i + j] = td & BASE_MAX;
+	//			tc = td >> BASE_NUM;
+	//		}
+	//		int n = 0;
+	//		while (tc) {
+	//			c.m_nIntegers[i + a.m_szIntegers + n] = tc & BASE_MAX;
+	//			tc >>= BASE_NUM;
+	//			n++;
+	//		}
+	//	}
+	//	c.m_bPositive = true;
+	//	c.m_szIntegers = len_c;
+	//	return c;
+	//}
+
+	// FFT
+	BigInteger res;
+	if(res.m_nIntegers)	delete[] res.m_nIntegers;
+
+	size_t len_a = a.m_szIntegers;
+	size_t len_b = b.m_szIntegers;
+
+	size_t len = 1;
+	while (len < 2 * len_a || len < 2 * len_b) len <<= 1;
+
+	res.m_nIntegers = new uint32[len+1];
+	res.m_szIntegers = len+1;
+	res.m_bPositive = true;
+
+	std::complex<double> *ca = new std::complex<double>[len];
+	std::complex<double> *cb = new std::complex<double>[len];
+
+	memset(ca, 0, sizeof(std::complex<double>)*len);
+	memset(cb, 0, sizeof(std::complex<double>)*len);
+
+	for (size_t i = 0; i < len_a; i++) {
+		ca[i].real(a.m_nIntegers[i]);
 	}
-	c.m_bPositive = true;
-	c.m_szIntegers = len_c;
-	return c;
+
+	for (size_t i = 0; i < len_b; i++) {
+		cb[i].real(b.m_nIntegers[i]);
+	}
+	fft(ca, len, 1);
+	fft(cb, len, 1);
+	for (size_t i = 0; i < len; i++) {
+		ca[i] *= cb[i];
+	}
+	fft(ca, len, -1);
+
+	uint64 *t = new uint64[len+1];
+	memset(t, 0, sizeof(uint64)*(len + 1));
+	for (size_t i = 0; i < len; i++) {
+		t[i] = uint64(ca[i].real() + 0.5);
+	}
+	for (size_t i = 0; i < len; i++) {
+		t[i + 1] += t[i] >> BASE_NUM;
+		t[i] = t[i] & BASE_MAX;
+	}
+
+	for (size_t i = 0; i <= len; i++) {
+		res.m_nIntegers[i] = uint32(t[i]);
+	}
+
+	delete[] ca;
+	delete[] cb;
+	delete[] t;
+	//std::cout << "This is FFT!" << std::endl;
+	return res;
 }
 
 BigInteger BigInteger::DivideTwoPositiveBigInteger(BigInteger a,BigInteger b, BigInteger& mod) {
@@ -487,4 +545,40 @@ BigInteger::operator char() {
 
 BigInteger::operator bool() {
 	return *this != ZERO;
+}
+
+void BigInteger::fft_change(std::complex<double> *y, int len) {
+	int i, j, k;
+	for (i = 1, j = len >> 1; i < len - 1; i++) {
+		if (i < j) swap(y[i], y[j]);
+		k = len >> 1;
+		while (j >= k) {
+			j -= k;
+			k >>= 1;
+		}
+		if (j < k) j += k;
+	}
+}
+
+void BigInteger::fft(std::complex<double> *y, int len, int on) {
+	const double PI = acos(-1.0);
+	BigInteger::fft_change(y, len);
+	for (int h = 2; h <= len; h <<= 1) {
+		std::complex<double> wn(cos(-on * 2 * PI / h), sin(-on * 2 * PI / h));
+		for (int j = 0; j < len; j += h) {
+			std::complex<double> w(1, 0);
+			for (int k = j; k < j + h / 2; k++) {
+				std::complex<double> u = y[k];
+				std::complex<double> t = w*y[k + h / 2];
+				y[k] = u + t;
+				y[k + h / 2] = u - t;
+				w = w*wn;
+			}
+		}
+	}
+	if (on == -1) {
+		for (int i = 0; i < len; i++) {
+			y[i].real(y[i].real() / len);
+		}
+	}
 }
