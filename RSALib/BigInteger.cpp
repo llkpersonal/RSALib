@@ -289,11 +289,11 @@ BigInteger BigInteger::SubTwoPositiveBigInteger(const BigInteger& a, const BigIn
 		if (i <= len_b) tb = arr_b[i]; else tb = 0;
 		tb += tc;
 		if (ta < tb) {
-			arr_c[i] = ta + (BASE_MAX+1) - tb;
+			arr_c[i] = uint32(ta + (BASE_MAX+1) - tb);
 			tc = 1;
 		}
 		else {
-			arr_c[i] = ta - tb;
+			arr_c[i] = uint32(ta - tb);
 			tc = 0;
 		}
 	}
@@ -305,31 +305,31 @@ BigInteger BigInteger::SubTwoPositiveBigInteger(const BigInteger& a, const BigIn
 
 BigInteger BigInteger::MultiplyTwoPositiveBigInteger(const BigInteger &a, const BigInteger &b) {
 	// ÆÓËØ³Ë·¨
-	//if (a.m_szIntegers*b.m_szIntegers < 1000) {
-	//	size_t len_c = a.m_szIntegers + b.m_szIntegers;
-	//	BigInteger c;
-	//	delete[] c.m_nIntegers;
-	//	c.m_nIntegers = new uint32[len_c];
-	//	memset(c.m_nIntegers, 0, sizeof(uint32)*len_c);
-	//	for (size_t i = 0; i < b.m_szIntegers; i++) {
-	//		uint64 tc = 0;
-	//		for (size_t j = 0; j < a.m_szIntegers; j++) {
-	//			uint64 ta = a.m_nIntegers[j], tb = b.m_nIntegers[i];
-	//			uint64 td = ta*tb + tc + c.m_nIntegers[i + j];
-	//			c.m_nIntegers[i + j] = td & BASE_MAX;
-	//			tc = td >> BASE_NUM;
-	//		}
-	//		int n = 0;
-	//		while (tc) {
-	//			c.m_nIntegers[i + a.m_szIntegers + n] = tc & BASE_MAX;
-	//			tc >>= BASE_NUM;
-	//			n++;
-	//		}
-	//	}
-	//	c.m_bPositive = true;
-	//	c.m_szIntegers = len_c;
-	//	return c;
-	//}
+  	if (b.m_szIntegers < 2) {
+  		size_t len_c = a.m_szIntegers + b.m_szIntegers;
+  		BigInteger c;
+  		delete[] c.m_nIntegers;
+  		c.m_nIntegers = new uint32[len_c];
+  		memset(c.m_nIntegers, 0, sizeof(uint32)*len_c);
+  		for (size_t i = 0; i < b.m_szIntegers; i++) {
+  			uint64 tc = 0;
+  			for (size_t j = 0; j < a.m_szIntegers; j++) {
+  				uint64 ta = a.m_nIntegers[j], tb = b.m_nIntegers[i];
+  				uint64 td = ta*tb + tc + c.m_nIntegers[i + j];
+  				c.m_nIntegers[i + j] = td & BASE_MAX;
+  				tc = td >> BASE_NUM;
+  			}
+  			int n = 0;
+  			while (tc) {
+  				c.m_nIntegers[i + a.m_szIntegers + n] = tc & BASE_MAX;
+  				tc >>= BASE_NUM;
+  				n++;
+  			}
+  		}
+  		c.m_bPositive = true;
+  		c.m_szIntegers = len_c;
+  		return c;
+  	}
 
 	// FFT
 	BigInteger res;
@@ -393,6 +393,10 @@ BigInteger BigInteger::DivideTwoPositiveBigInteger(BigInteger a,BigInteger b, Bi
 		throw std::runtime_error("Can not divide zero!");
 	}
 
+	if (a < b) {
+		return BigInteger::ZERO;
+	}
+
 	BigInteger res;
 
 	size_t len_a = a.m_szIntegers - 1;
@@ -404,7 +408,7 @@ BigInteger BigInteger::DivideTwoPositiveBigInteger(BigInteger a,BigInteger b, Bi
 
 	while (a >= b && len_c >= 0) {
 		BigInteger c = b.MultiplyWithPowerTen(len_c);
-		uint32 l = 0, r = BASE_MAX+1;
+		uint32 l = 0, r = BASE_MAX + 1;
 		while (r - l > 1) {
 			int m = l + r >> 1;
 			BigInteger d = c*BigInteger(m);
@@ -483,7 +487,7 @@ BigInteger BigInteger::DivideWithPowerTen(int e) {
 BigInteger BigInteger::pow(BigInteger x, BigInteger e,BigInteger mod) {
 	BigInteger res = ONE;
 	while (e > ZERO) {
-		if (e % TWO == ONE) res = res * x % mod;
+		if (e & 1) res = res * x % mod;
 		x = x * x % mod;
 		e = e.DivideByTwo();
 	}
@@ -581,4 +585,58 @@ void BigInteger::fft(std::complex<double> *y, int len, int on) {
 			y[i].real(y[i].real() / len);
 		}
 	}
+}
+
+int BigInteger::operator&(int x) const {
+	return m_nIntegers[0] & x;
+}
+
+int BigInteger::operator%(int b) const {
+	long long res = 0;
+	long long uBase = 1;
+	for (int i = 0; i < m_szIntegers; i++) {
+		res += (m_nIntegers[i] * uBase) % b;
+		uBase = (uBase << BASE_NUM)%b;
+	}
+	return res%b;
+}
+
+BigInteger BigInteger::operator>>(int x) const {
+	BigInteger res;
+	delete[] res.m_nIntegers;
+	res.m_szIntegers = this->m_szIntegers - x / BASE_NUM;
+	int offset = this->m_szIntegers - res.m_szIntegers;
+	res.m_nIntegers = new uint32[res.m_szIntegers];
+	memset(res.m_nIntegers, 0, sizeof(uint32)*res.m_szIntegers);
+	for (size_t i = 0; i + offset < m_szIntegers; i++) {
+		res.m_nIntegers[i] = m_nIntegers[i + offset];
+	}
+	offset = x - offset*BASE_NUM;
+	for (size_t i = 0; i < res.m_szIntegers; i++) {
+		res.m_nIntegers[i] = res.m_nIntegers[i] >> offset;
+		if (i + 1 < res.m_szIntegers) {
+			res.m_nIntegers[i] |= (res.m_nIntegers[i + 1] & ((1 << offset) - 1)) << (BASE_NUM - offset);
+		}
+	}
+	return res;
+}
+
+BigInteger BigInteger::operator<<(int x) const {
+	BigInteger res;
+	delete[] res.m_nIntegers;
+	res.m_szIntegers = this->m_szIntegers + (x + BASE_NUM - 1) / BASE_NUM;
+	int offset = res.m_szIntegers - m_szIntegers;
+	res.m_nIntegers = new uint32[res.m_szIntegers];
+	memset(res.m_nIntegers, 0, sizeof(uint32)*res.m_szIntegers);
+	for (size_t i = 0; i < m_szIntegers; i++) {
+		res.m_nIntegers[i + offset] = m_nIntegers[i];
+	}
+	offset = offset * BASE_NUM - x;
+	for (size_t i = 0; i < res.m_szIntegers; i++) {
+		res.m_nIntegers[i] = res.m_nIntegers[i] >> offset;
+		if (i + 1 < res.m_szIntegers) {
+			res.m_nIntegers[i] |= (res.m_nIntegers[i + 1] & ( (1 << offset) - 1) )<< (BASE_NUM-offset);
+		}
+	}
+	return res;
 }
