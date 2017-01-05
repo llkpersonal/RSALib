@@ -11,7 +11,7 @@ class PrimeUtil {
 public:
 	static BigInteger GeneratePrime(int bitCount);
 	static BigInteger GenerateSafePrime(int bitCount);
-	static bool MillarRabin(BigInteger n);
+	static bool MillarRabin(BigInteger n, int rbit);
 };
 
 #endif

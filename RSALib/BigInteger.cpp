@@ -5,7 +5,7 @@ BigInteger BigInteger::TWO(2);
 BigInteger BigInteger::ZERO(0);
 BigInteger BigInteger::TEN(10);
 
-const BigInteger::uint32 BigInteger::BASE_NUM = 16;
+const BigInteger::uint32 BigInteger::BASE_NUM = 31;
 const BigInteger::uint32 BigInteger::BASE_MAX = (1<< BASE_NUM)-1;
 
 BigInteger::BigInteger():m_bPositive(true),m_szIntegers(1) {
@@ -162,8 +162,8 @@ BigInteger BigInteger::operator/(BigInteger b) {
 }
 
 BigInteger BigInteger::operator%(BigInteger b) {
-	BigInteger c = *this / b;
-	return *this - b*c;
+ 	BigInteger c = *this / b;
+ 	return *this - b*c;
 }
 
 bool BigInteger::operator==(const BigInteger& b) const {
@@ -305,7 +305,7 @@ BigInteger BigInteger::SubTwoPositiveBigInteger(const BigInteger& a, const BigIn
 
 BigInteger BigInteger::MultiplyTwoPositiveBigInteger(const BigInteger &a, const BigInteger &b) {
 	// ÆÓËØ³Ë·¨
-  	if (b.m_szIntegers < 2) {
+  	//if (b.m_szIntegers < 2) {
   		size_t len_c = a.m_szIntegers + b.m_szIntegers;
   		BigInteger c;
   		delete[] c.m_nIntegers;
@@ -329,61 +329,61 @@ BigInteger BigInteger::MultiplyTwoPositiveBigInteger(const BigInteger &a, const 
   		c.m_bPositive = true;
   		c.m_szIntegers = len_c;
   		return c;
-  	}
+  	//}
 
 	// FFT
-	BigInteger res;
-	if(res.m_nIntegers)	delete[] res.m_nIntegers;
+	//BigInteger res;
+	//if(res.m_nIntegers)	delete[] res.m_nIntegers;
 
-	size_t len_a = a.m_szIntegers;
-	size_t len_b = b.m_szIntegers;
+	//size_t len_a = a.m_szIntegers;
+	//size_t len_b = b.m_szIntegers;
 
-	size_t len = 1;
-	while (len < 2 * len_a || len < 2 * len_b) len <<= 1;
+	//size_t len = 1;
+	//while (len < 2 * len_a || len < 2 * len_b) len <<= 1;
 
-	res.m_nIntegers = new uint32[len+1];
-	res.m_szIntegers = len+1;
-	res.m_bPositive = true;
+	//res.m_nIntegers = new uint32[len+1];
+	//res.m_szIntegers = len+1;
+	//res.m_bPositive = true;
 
-	std::complex<double> *ca = new std::complex<double>[len];
-	std::complex<double> *cb = new std::complex<double>[len];
+	//std::complex<double> *ca = new std::complex<double>[len];
+	//std::complex<double> *cb = new std::complex<double>[len];
 
-	memset(ca, 0, sizeof(std::complex<double>)*len);
-	memset(cb, 0, sizeof(std::complex<double>)*len);
+	//memset(ca, 0, sizeof(std::complex<double>)*len);
+	//memset(cb, 0, sizeof(std::complex<double>)*len);
 
-	for (size_t i = 0; i < len_a; i++) {
-		ca[i].real(a.m_nIntegers[i]);
-	}
+	//for (size_t i = 0; i < len_a; i++) {
+	//	ca[i].real(a.m_nIntegers[i]);
+	//}
 
-	for (size_t i = 0; i < len_b; i++) {
-		cb[i].real(b.m_nIntegers[i]);
-	}
-	fft(ca, len, 1);
-	fft(cb, len, 1);
-	for (size_t i = 0; i < len; i++) {
-		ca[i] *= cb[i];
-	}
-	fft(ca, len, -1);
+	//for (size_t i = 0; i < len_b; i++) {
+	//	cb[i].real(b.m_nIntegers[i]);
+	//}
+	//fft(ca, len, 1);
+	//fft(cb, len, 1);
+	//for (size_t i = 0; i < len; i++) {
+	//	ca[i] *= cb[i];
+	//}
+	//fft(ca, len, -1);
 
-	uint64 *t = new uint64[len+1];
-	memset(t, 0, sizeof(uint64)*(len + 1));
-	for (size_t i = 0; i < len; i++) {
-		t[i] = uint64(ca[i].real() + 0.5);
-	}
-	for (size_t i = 0; i < len; i++) {
-		t[i + 1] += t[i] >> BASE_NUM;
-		t[i] = t[i] & BASE_MAX;
-	}
+	//uint64 *t = new uint64[len+1];
+	//memset(t, 0, sizeof(uint64)*(len + 1));
+	//for (size_t i = 0; i < len; i++) {
+	//	t[i] = uint64(ca[i].real() + 0.5);
+	//}
+	//for (size_t i = 0; i < len; i++) {
+	//	t[i + 1] += t[i] >> BASE_NUM;
+	//	t[i] = t[i] & BASE_MAX;
+	//}
 
-	for (size_t i = 0; i <= len; i++) {
-		res.m_nIntegers[i] = uint32(t[i]);
-	}
+	//for (size_t i = 0; i <= len; i++) {
+	//	res.m_nIntegers[i] = uint32(t[i]);
+	//}
 
-	delete[] ca;
-	delete[] cb;
-	delete[] t;
-	//std::cout << "This is FFT!" << std::endl;
-	return res;
+	//delete[] ca;
+	//delete[] cb;
+	//delete[] t;
+	////std::cout << "This is FFT!" << std::endl;
+	//return res;
 }
 
 BigInteger BigInteger::DivideTwoPositiveBigInteger(BigInteger a,BigInteger b, BigInteger& mod) {
@@ -484,15 +484,30 @@ BigInteger BigInteger::DivideWithPowerTen(int e) {
 	return res;
 }
 
-BigInteger BigInteger::pow(BigInteger x, BigInteger e,BigInteger mod) {
-	BigInteger res = ONE;
-	while (e > ZERO) {
-		if (e & 1) res = res * x % mod;
-		x = x * x % mod;
-		e = e.DivideByTwo();
-	}
-	return res;
-}
+//BigInteger BigInteger::pow(BigInteger x, BigInteger e,BigInteger mod) {
+//	BigInteger res = ONE;
+//
+//	int rbit = 256;
+//	BigInteger t(mod);
+//	BigInteger r = ONE << rbit;
+//	BigInteger n, y;
+//	BigInteger modn = extGcd(mod, r, n, y);
+//	if (modn != ONE) {
+//		throw std::runtime_error("Gcd(m,r)!=1");
+//	}
+//	n = r - n;
+//	while (n < ZERO) {
+//		n = n + r;
+//	}
+//
+//	//while (e > ZERO) {
+//	//	if (e & 1) res = BigInteger::MultiplyAndMod(res, x, mod,n,rbit);//res * x % mod;
+//	//	x = BigInteger::MultiplyAndMod(x, x, mod,n,rbit);//x * x % mod;
+//	//	e = e.DivideByTwo();
+//	//}
+//	
+//	return res;
+//}
 
 BigInteger BigInteger::DivideByTwo() {
 	BigInteger res;
@@ -639,4 +654,102 @@ BigInteger BigInteger::operator<<(int x) const {
 		}
 	}
 	return res;
+}
+
+BigInteger BigInteger::operator&(const BigInteger& b) const {
+	BigInteger res;
+	delete[] res.m_nIntegers;
+	size_t n = std::min(this->m_szIntegers, b.m_szIntegers);
+	res.m_nIntegers = new uint32[n];
+	res.m_szIntegers = n;
+	for (int i = 0; i < n; i++) {
+		res.m_nIntegers[i] = m_nIntegers[i] & b.m_nIntegers[i];
+	}
+	return res;
+}
+
+BigInteger BigInteger::Lower(int nBit) {
+	BigInteger t = ONE;
+	t = t << nBit;
+	t = t - ONE;
+	return *this&t;
+}
+
+BigInteger BigInteger::ModWithTwoBit(BigInteger a, BigInteger b, int k) {
+	b = b << k;
+	BigInteger res = a;
+	for (int i = 0; i < k; i++) {
+		if (res > ZERO) res = res - b;
+		else res = res + b;
+		b = b.DivideByTwo();
+	}
+	if (res < ZERO) res = res + b;
+	while (res < ZERO) res = res + b;
+	while (res >= b) res = res - b;
+	return res;
+}
+
+//BigInteger BigInteger::MultiplyAndMod(BigInteger a, BigInteger b,BigInteger m,BigInteger n,int rbit) {
+//	a = (a<<rbit);
+//	b = (b<<rbit);
+//	a = ModWithTwoBit(a, m, rbit);
+//	b = ModWithTwoBit(b, m, rbit);
+//	BigInteger t = a * b;
+//	t = t.MontReduction(m, n, rbit);
+//	return t.MontReduction(m, n, rbit);
+//}
+//
+//BigInteger BigInteger::MontReduction(BigInteger p, BigInteger n,int rbit) {
+//	BigInteger t = this->Lower(rbit);
+//	BigInteger u = t*n;
+//	u = u.Lower(rbit);
+//	BigInteger r = (*this + u*p) >> rbit;
+//	if (r >= p) {
+//		r = r - p;
+//	}
+//	return r;
+//}
+
+BigInteger BigInteger::MonPro(BigInteger a, BigInteger b,BigInteger n,BigInteger nrev,int rbit) {
+	BigInteger t = a*b;
+	//std::cout << t << std::endl;
+	BigInteger m = (t*nrev);
+	m = m.Lower(rbit);
+	//std::cout << m << std::endl;
+	BigInteger u = (t + m*n) >> rbit;
+	//std::cout << u << std::endl;
+	if (u >= n) u = u - n;
+	return u;
+}
+
+BigInteger BigInteger::ModMul(BigInteger a, BigInteger b, const BigInteger& n,const BigInteger& nrev,const BigInteger& r, int rbit) {
+	a = a * r;
+	b = b * r;
+	a = ModWithTwoBit(a, n, rbit);
+	b = ModWithTwoBit(b, n, rbit);
+	BigInteger x = MonPro(a, b, n, nrev, rbit);
+	x = MonPro(x, ONE, n, nrev, rbit);
+	return x;
+}
+
+BigInteger BigInteger::ModExp(BigInteger M, BigInteger e, BigInteger n,int rbit) {
+	BigInteger nrev, y;
+	BigInteger r = ONE << rbit;
+	extGcd(n, r, nrev, y);
+	nrev = r - nrev;
+	if (nrev < ZERO) nrev = nrev + r;
+	M = M*r;
+	//std::cout << M << std::endl;
+	//std::cout << n << std::endl;
+	M = ModWithTwoBit(M,n,rbit);
+	//std::cout << M << std::endl;
+ 	BigInteger x = ModWithTwoBit(r, n, rbit);
+	while (e) {
+		if (e & 1)
+			x = MonPro(M, x, n, nrev, rbit);
+		M = MonPro(M, M, n, nrev, rbit);
+		e = e.DivideByTwo();
+	}
+	x = MonPro(x, ONE, n, nrev, rbit);
+	return x;
 }
