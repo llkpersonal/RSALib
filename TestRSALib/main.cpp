@@ -20,6 +20,6 @@ int main() {
 	string M = RSAUtil::GetInstance()->Encrypt("I Have a Pen!", pubkey);
 	cout << M << endl;
 	string E = RSAUtil::GetInstance()->Decrypt(M, privkey);
-	cout << E << endl;
+	cout << E << endl;	
 	return 0;
 }

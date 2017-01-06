@@ -2,10 +2,11 @@
 
 BigInteger PrimeUtil::GeneratePrime(int bitCount) {
 	BigInteger res;
+	std::random_device rd;
 	do {
 		res = BigInteger::ONE;
 		for (int i = 1; i < bitCount - 1; i++) {
-			res = res * BigInteger::TWO + BigInteger(rand() % 2);
+			res = res * BigInteger::TWO + BigInteger(rd()&1);
 		}
 		res = res * BigInteger::TWO + BigInteger::ONE;
 	} while (!MillarRabin(res, bitCount));
@@ -13,10 +14,11 @@ BigInteger PrimeUtil::GeneratePrime(int bitCount) {
 }
 
 BigInteger PrimeUtil::GenerateSafePrime(int bitCount) {
-	BigInteger res;
+	BigInteger res,t;
 	do {
-		BigInteger t = GeneratePrime(bitCount - 1);
+		t = GeneratePrime(bitCount-1);
 		res = t*BigInteger::TWO + BigInteger::ONE;
+		//std::cout << res << std::endl;
 	} while (!MillarRabin(res,bitCount));
 	return res;
 }

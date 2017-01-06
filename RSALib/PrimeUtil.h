@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <ctime>
+#include <random>
 #include "BigInteger.h"
 
 class PrimeUtil {

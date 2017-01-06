@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CDecryptDlg, CDialogEx)
 
 CDecryptDlg::CDecryptDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_DECRYPT, pParent)
-	, m_lblKeyInfo(_T(""))
+	, m_lblKeyInfo("«Î—°‘ÒÀΩ‘ø")
 {
 
 }

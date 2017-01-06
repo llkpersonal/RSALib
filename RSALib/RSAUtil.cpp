@@ -2,9 +2,7 @@
 
 RSAUtil* RSAUtil::m_pInstance = nullptr;
 
-RSAUtil::RSAUtil(){
-	srand(time(NULL));
-}
+RSAUtil::RSAUtil(){}
 
 RSAUtil::RSAUtil(RSAUtil& util){}
 RSAUtil::~RSAUtil(){}
