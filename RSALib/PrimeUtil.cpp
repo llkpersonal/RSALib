@@ -1,7 +1,6 @@
 #include "PrimeUtil.h"
 
 BigInteger PrimeUtil::GeneratePrime(int bitCount) {
-	srand(time(NULL));
 	BigInteger res;
 	do {
 		res = BigInteger::ONE;

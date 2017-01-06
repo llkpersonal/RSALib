@@ -1,5 +1,7 @@
 #include "BigInteger.h"
 
+//#define BIGINTEGER_USE_DECIMAL
+
 BigInteger BigInteger::ONE(1);
 BigInteger BigInteger::TWO(2);
 BigInteger BigInteger::ZERO(0);
@@ -60,7 +62,11 @@ BigInteger::BigInteger(const std::string& sNumber):
 			else
 				throw std::runtime_error("The first argument is not a number!");
 		}
-		else if (sNumber[i] > '9' || sNumber[i] < '0') {
+		else if ( !((sNumber[i] <= '9' && sNumber[i] >= '0')
+#ifndef BIGINTEGER_USE_DECIMAL
+			||(sNumber[i]<='f' && sNumber[i]>='a')
+#endif
+			)) {
 			throw std::runtime_error("The first argument is not a number!");
 		}
 		else {
@@ -71,8 +77,17 @@ BigInteger::BigInteger(const std::string& sNumber):
 	m_nIntegers[0] = 0;
 	m_szIntegers = 1;
 	for (std::string::size_type i = 0; i < sNumber.size(); i++) {
+#ifdef BIGINTEGER_USE_DECIMAL
 		if(sNumber[i] >= '0' && sNumber[i]<='9')
 			*this = *this*BigInteger::TEN + BigInteger(sNumber[i] - '0');
+#else
+		if (sNumber[i] >= '0' && sNumber[i] <= '9') {
+			*this = (*this<<4) + BigInteger(sNumber[i] - '0');
+		}
+		else if (sNumber[i] >= 'a' && sNumber[i] <= 'f') {
+			*this = (*this << 4) + BigInteger(sNumber[i] - 'a' + 10);
+		}
+#endif
 	}
 }
 
@@ -445,9 +460,25 @@ std::string BigInteger::ParseToDecimal() const{
 	return res;
 }
 
+std::string BigInteger::ParseToHex() const {
+	static char hexstr[] = "0123456789abcdef";
+	BigInteger t(*this);
+	std::string res("");
+	while (t) {
+		int nHex = t & 15;
+		res = hexstr[nHex] + res;
+		t = t >> 4;
+	}
+	return res;
+}
+
 std::ostream& operator<<(std::ostream& os, const BigInteger& b) {
 	if (!b.m_bPositive) os << '-';
+#ifdef BIGINTEGER_USE_DECIMAL
 	os << b.ParseToDecimal();
+#else
+	os << b.ParseToHex();
+#endif
 	return os;
 }
 
@@ -484,30 +515,17 @@ BigInteger BigInteger::DivideWithPowerTen(int e) {
 	return res;
 }
 
-//BigInteger BigInteger::pow(BigInteger x, BigInteger e,BigInteger mod) {
-//	BigInteger res = ONE;
-//
-//	int rbit = 256;
-//	BigInteger t(mod);
-//	BigInteger r = ONE << rbit;
-//	BigInteger n, y;
-//	BigInteger modn = extGcd(mod, r, n, y);
-//	if (modn != ONE) {
-//		throw std::runtime_error("Gcd(m,r)!=1");
-//	}
-//	n = r - n;
-//	while (n < ZERO) {
-//		n = n + r;
-//	}
-//
-//	//while (e > ZERO) {
-//	//	if (e & 1) res = BigInteger::MultiplyAndMod(res, x, mod,n,rbit);//res * x % mod;
-//	//	x = BigInteger::MultiplyAndMod(x, x, mod,n,rbit);//x * x % mod;
-//	//	e = e.DivideByTwo();
-//	//}
-//	
-//	return res;
-//}
+BigInteger BigInteger::pow(BigInteger x, BigInteger e,BigInteger mod) {
+	BigInteger res = ONE;
+
+	while (e > ZERO) {
+		if (e & 1) res = res * x % mod;
+		x = x * x % mod;
+		e = e.DivideByTwo();
+	}
+	
+	return res;
+}
 
 BigInteger BigInteger::DivideByTwo() {
 	BigInteger res;

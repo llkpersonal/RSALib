@@ -45,13 +45,14 @@ public:
 	explicit operator char();
 	explicit operator bool();
 	friend std::ostream& operator<<(std::ostream& os, const BigInteger& b);
-	//static BigInteger pow(BigInteger x,BigInteger e,BigInteger mod);
+	static BigInteger pow(BigInteger x,BigInteger e,BigInteger mod);
 	static BigInteger gcd(BigInteger a, BigInteger b);
 	static BigInteger extGcd(BigInteger a, BigInteger b, BigInteger &x, BigInteger &y);
 	static BigInteger random(size_t bitCount);
 	//static BigInteger MultiplyAndMod(BigInteger a, BigInteger b, BigInteger m, BigInteger n, int rbit);
 	//BigInteger MontReduction(BigInteger p, BigInteger n, int rbit);
 	std::string ParseToDecimal() const;
+	std::string ParseToHex() const;
 	// 该函数使用时必须要重新赋值使用
 	BigInteger DivideByTwo();
 

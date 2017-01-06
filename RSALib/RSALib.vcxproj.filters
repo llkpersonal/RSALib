@@ -21,12 +21,18 @@
     <ClInclude Include="PrimeUtil.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="RSAUtil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BigInteger.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PrimeUtil.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RSAUtil.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
